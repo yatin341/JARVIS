@@ -1,0 +1,7 @@
+SpeechRecognition
+pyttsx3
+groq
+elevenlabs
+PyAutoGUI
+Pyperclip
+PyAudio
