@@ -4,7 +4,6 @@ SpeechRecognition
 PyAudio; platform_system == "Windows"
 elevenlabs
 groq
-pyttsx3; platform_system == "Windows"
 pyautogui; platform_system == "Windows"
 pyperclip
 python-dotenv
