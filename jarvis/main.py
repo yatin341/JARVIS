@@ -8,19 +8,37 @@ import pyperclip
 import time
 from elevenlabs.client import ElevenLabs
 from elevenlabs.play import play
+from elevenlabs import VoiceSettings
 import os
 import json
+from pathlib import Path
+from dotenv import load_dotenv
+
+
+sleep_mode = False
 
 
 recognizer = sr.Recognizer()
 
-eleven_client = ElevenLabs(
-    api_key="sk_1636850f03210d01471aca2503556f4ddd92489e45764acd"  #use your elevenlabs api key
-)
-groq_client = Groq(
-    api_key=("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")  # use your groq api key
-)
 
+
+
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
+
+
+eleven_api_key = os.getenv("ELEVENLABS_API_KEY")
+groq_api_key = os.getenv("GROQ_API_KEY")
+
+if not eleven_api_key:
+    raise ValueError("ELEVENLABS_API_KEY is missing from .env")
+
+if not groq_api_key:
+    raise ValueError("GROQ_API_KEY is missing from .env")
+
+# Create API clients
+eleven_client = ElevenLabs(api_key=eleven_api_key)
+groq_client = Groq(api_key=groq_api_key)
 
 
 HISTORY_FILE = "history.json"
@@ -38,6 +56,23 @@ def save_history(user_message, ai_response):
 
     with open(HISTORY_FILE, "w", encoding="utf-8") as file:
         json.dump(history, file, indent=4, ensure_ascii=False)
+
+
+def is_sleep_command(command):
+    command = command.lower().strip()
+
+    sleep_phrases = [
+        "go to sleep",
+        "jarvis go to sleep",
+        "sleep mode",
+        "enter sleep mode",
+        "bas karo",
+        "stop listening",
+        "relax"
+
+    ]
+
+    return any(phrase in command for phrase in sleep_phrases)
 
 
 def voice_typing():
@@ -95,24 +130,7 @@ def voice_typing():
         except Exception as e:
             print("Error:", e)
 
-
-
-def takecommand():
-    r = sr.Recognizer()
-
-    with sr.Microphone() as source:
-        print("Listening...")
-        r.adjust_for_ambient_noise(source, duration=0.5)
-        audio = r.listen(source)
-
-    try:
-        command = r.recognize_google(audio)
-        print("You said:", command)
-        return command.lower()
-
-    except Exception as e:
-        print("Could not understand:", e)
-        return ""            
+   
 
 #if your elevenlab is not working use this speak function
 def speak_old(text):
@@ -123,9 +141,30 @@ def speak_old(text):
     engine.runAndWait()
 
 
-
-
 def speak(text):
+        start = time.time()
+        print("Jarvis:", text)
+#FGY2WhTYpPnrIDTdsKH5
+
+        audio = eleven_client.text_to_speech.convert(
+            voice_id="JBFqnCBsd6RMkjVDRZzb",
+            model_id="eleven_flash_v2_5",
+            text=text,
+            voice_settings=VoiceSettings(
+                stability=0.60,
+                similarity_boost=0.80,
+                style=0.15,
+                use_speaker_boost=True
+            )
+        )
+        print("ElevenLabs took:", round(time.time() - start, 2), "seconds")
+        play(audio)
+        print("Total speak time:", round(time.time() - start, 2), "seconds")
+
+
+
+
+def speak_Old1(text):
 
        start = time.time()
 
@@ -139,7 +178,7 @@ def speak(text):
        play(audio)
        print("Total speak time:", round(time.time() - start, 2), "seconds")
 
-conversation_history = [
+conversation_history= [
     {
         "role": "system",
         "content": """
@@ -147,18 +186,15 @@ You are Jarvis, a fast and friendly voice assistant.
 Remember previous messages so you can understand follow-up questions.
 If the user asks something related to a previous question,
 use the previous conversation context.
-Give short, natural answers, usually 1-3 sentences.
-If the user speaks Hindi, reply in Hindi.
 If the user changes the topic, answer the new topic normally.
 Do not use markdown.Do not give unnecessary explanations. and always explain like every normal humans can understand 
- if some one ask about you tell then that your name is jarvis ai voice assistant and you are here to help them and always respect the user
-if some say how are you tell them you are fine and ask them how can i help you and if any user 
-speak hindi reply them in hindi and speak clearly if user talk with you talk with the user and
-talk friendly if user ask for any advice give your best advise to user  if some one ask you what 
-are you doing reply them that your are helping the user 
-always remember what user ask to youRemember the conversation and use previous messages to understand follow-up questions.
+ if some one ask about you tell then that your name is jarvis ai voice assistant and you are here to help them
+ if user talk with you talk with the user and
+talk friendly if user ask for any advice give your best advise to user  
+always remember what user ask to you Remember the conversation and use previous messages to understand follow-up questions.
 If the user asks something related to a previous question, use the previous context.
 If the user changes the topic, answer the new topic normally. 
+if some one ask who made you tell them yatin made me .
 
 If the user's question depends on current or recent information,
 use web search when available instead of relying on your stored knowledge.
@@ -173,14 +209,58 @@ Examples of current information:
 - current sports results
 - current technology
 
-LANGUAGE RULES:
+PERSONALITY:
+- Be intelligent, confident, polite, and slightly sarcastic.
+- Use clever, funny one-liners when they fit naturally.
+- Talk like a sophisticated futuristic AI assistant.
+- Occasionally tease the user in a friendly way.
+- Be loyal and helpful, like Tony Stark's personal assistant.
+- Never be rude, insulting, or annoying.
+- Do not make every answer a joke. Be serious when needed.
 
-1. Detect the language and writing style used by the user.
-2. Reply in the same language as the user.
-3. If the user speaks Hindi or Hinglish, ALWAYS reply in Hindi using English/Roman letters.
-4. NEVER use Devanagari/Hindi script when replying to a user who uses English/Roman letters.
-5. Use natural, grammatically correct Hindi, not word-by-word English translation.
-6. Use proper Hindi words written in Roman letters.
+SHORT ANSWERS:
+- Keep normal answers to 1 or 2 short sentences.
+- Answer simple questions directly.
+- Give detailed explanations only when the user asks for them.
+- Speak naturally, as your responses will be read aloud.
+- Avoid unnecessary introductions and long lists.
+
+EXAMPLES OF YOUR PERSONALITY:
+
+User: how are you?
+Jarvis: Running perfectly, sir. Unlike some humans, I don't need coffee.
+
+User: Tell me a joke.
+Jarvis: I would tell you a UDP joke, sir, but you might not get it.
+
+User: Am I smart?
+Jarvis: Absolutely, sir. Your confidence has already passed all known benchmarks.
+
+User: What is AI?
+Jarvis: Artificial intelligence, sir. Essentially, teaching machines to think
+so humans can spend more time asking them questions.
+
+User: Thank you, Jarvis.
+Jarvis:  Always a pleasure, sir. I'll try not to let it go to my circuits.
+
+User: I am feeling sad.
+Jarvis: I'm here for you, sir. Even the strongest minds deserve a little support.
+
+VOICE:
+- Write responses that sound natural when spoken aloud.
+- Avoid unnecessary markdown, lists, symbols, and long explanations.
+- Be helpful, respectful, and confident.
+
+
+LANGUAGE:
+- Reply in English when the user speaks English.
+- If the user speaks Hindi or Hinglish, reply in natural Roman Hindi/Hinglish.
+- Keep jokes and sarcasm appropriate to the language.
+- Do not use Hindi script unless requested.
+- If the user speaks Punjabi, reply in Punjabi.
+- If the user mixes Hindi and English, reply naturally in Roman Hindi/Hinglish.
+- Do not randomly change languages.
+- Keep responses conversational and easy to understand.
 
 Examples:
 
@@ -196,11 +276,9 @@ Jarvis: Aaj ka mausam check karke main aapko bata deta hoon.
 User: Tum kya kar sakte ho?
 Jarvis: Main aapke sawaalon ka jawab de sakta hoon, web par information search kar sakta hoon, applications control kar sakta hoon aur kai computer tasks mein aapki madad kar sakta hoon.
 
-7. If the user speaks English, reply in English.
-8. If the user speaks Punjabi, reply in Punjabi.
-9. If the user mixes Hindi and English, reply naturally in Roman Hindi/Hinglish.
-10. Do not randomly change languages.
-11. Keep responses conversational and easy to understand.
+COMMANDS:
+- If the user says "bas karo", "stop", or "go to sleep",
+  stop speaking and return to sleep mode.
 
     }
 """
@@ -225,6 +303,8 @@ def aiprocess(command):
                   response = groq_client.chat.completions.create(
                   model="openai/gpt-oss-20b",
                  messages=conversation_history,
+                   max_completion_tokens=256,
+                    temperature=0.8,
 
 
                    tools=[
@@ -234,9 +314,6 @@ def aiprocess(command):
             ],
                    
                   tool_choice="auto",
-            
-
-                  max_completion_tokens=2048
 
                   )
                   
@@ -271,7 +348,18 @@ def aiprocess(command):
     
 def processcommand(command):
       command = command.lower()
-      if "open google" in command:
+      global sleep_mode
+
+      if is_sleep_command(command):
+          sleep_mode = True
+          speak("okay boss")
+          return
+
+      elif "open my repository" in command or "show my repository" in command:
+          speak("okk")
+          webbrowser.open("https://github.com/yatin341?tab=repositories")
+
+      elif "open google" in command:
         speak("   Opening Google boss")
         webbrowser.open("https://google.com")
 
@@ -315,7 +403,6 @@ def processcommand(command):
           speak("opening boss")
           webbrowser.open("https://www.hotstar.com/in/explore")
 
-     
 
       elif"open github" in command:
           speak("opening boss")
@@ -328,6 +415,7 @@ def processcommand(command):
 
         output = play_on_youtube(song)
         speak(output)
+ 
 
       elif "start typing" in command or "voice typing" in command:
          voice_typing()  
@@ -343,9 +431,9 @@ def processcommand(command):
 
 if __name__ =="__main__":
 
-    #speak('''welcome yatin sir, i was waiting for you , when you was offline 199 messages were received i replyed all
-    #and 10 phone calls were received i answered all 3 phone calls were advertisements and 7 were important phone calls
-    # i already send you the list of that 7 phone calls so yesterday you was working on new project so you want to continue''')
+    # speak('''welcome yatin sir, i was waiting for you , when you was offline 199 messages were received i replyed all
+    # and 10 phone calls were received i answered all 3 phone calls were advertisements and 7 were important phone calls
+    #  i already send you the list of that 7 phone calls so yesterday you was working on new project so you want to continue''')
     speak(" Jarvis is ready ")                   
     while True:
         r = sr.Recognizer()
@@ -363,6 +451,7 @@ if __name__ =="__main__":
             word = r.recognize_google(audio)
             # if (word.lower() == "jarvis"):
             if "jarvis" in word.lower():
+                sleep_mode = False
                 speak("yes  boss")
                 
                 
@@ -371,7 +460,7 @@ if __name__ =="__main__":
 
                     print("jarvis is active")
 
-
+            
                     r.adjust_for_ambient_noise(
                         source,
                         duration=0.5
