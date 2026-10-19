@@ -1,7 +1,11 @@
+fastapi
+uvicorn[standard]
 SpeechRecognition
-pyttsx3
-groq
-elevenlabs
-PyAutoGUI
-Pyperclip
 PyAudio
+elevenlabs
+groq
+pyttsx3; platform_system == "Windows"
+pyautogui; platform_system == "Windows"
+pyperclip
+python-dotenv
+google-api-python-client
