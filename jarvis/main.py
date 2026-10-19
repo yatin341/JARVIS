@@ -1,5 +1,4 @@
 import speech_recognition as sr
-import pyttsx3
 import webbrowser
 from youtube import play_on_youtube
 from groq import Groq
@@ -130,15 +129,7 @@ def voice_typing():
         except Exception as e:
             print("Error:", e)
 
-   
 
-#if your elevenlab is not working use this speak function
-def speak_old(text):
-    engine = pyttsx3.init('sapi5')
-    voices = engine.getProperty('voices')
-    engine.setProperty('voice', voices[1].id)  
-    engine.say(text)
-    engine.runAndWait()
 
 
 def speak(text):
