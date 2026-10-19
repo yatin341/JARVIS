@@ -1,10 +1,10 @@
 fastapi
 uvicorn[standard]
-SpeechRecognition
+pydantic
+groq
+python-dotenv
+SpeechRecognition; platform_system == "Windows"
 PyAudio; platform_system == "Windows"
 elevenlabs
-groq
 pyautogui; platform_system == "Windows"
-pyperclip
-python-dotenv
-google-api-python-client
+pyperclip; platform_system == "Windows"
