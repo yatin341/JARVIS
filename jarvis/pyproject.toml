@@ -1,2 +1,16 @@
+[project]
+name = "jarvis-assistant"
+version = "1.0.0"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "SpeechRecognition",
+    "elevenlabs",
+    "groq",
+    "python-dotenv",
+    "google-api-python-client",
+]
+
 [tool.vercel]
-entrypoint = "interface:app"
+entrypoint = "interface.py"
