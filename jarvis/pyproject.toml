@@ -13,4 +13,4 @@ dependencies = [
 ]
 
 [tool.vercel]
-entrypoint = "interface:app"
+entrypoint = entrypoint = "api.index:app"
