@@ -107,11 +107,11 @@ def voice_typing():
                 continue
 
             elif text.lower() in ["space","give gap","give space"]:
-                pyautogui.press("spacebar")
+                pyautogui.press("space")
                 continue
 
             elif text.lower() in ["next line",]:
-                pyautogui.press("shift","enter")
+               pyautogui.hotkey("shift", "enter")
                 continue
                 
 
@@ -435,6 +435,8 @@ if __name__ =="__main__":
     #  i already send you the list of that 7 phone calls so yesterday you was working on new project so you want to continue''')
     speak(" Jarvis is ready ")                   
     while True:
+         if sleep_mode:
+             print("Jarvis is sleeping. Say 'Jarvis' to wake me.")
         r = sr.Recognizer()
 
         r.pause_threshold = 1.8
