@@ -1,4 +1,3 @@
-
 import io
 import re
 import threading
@@ -36,8 +35,8 @@ PCM_RATE = 24000
 
 
 def clean_for_speech(text):
-    text = re.sub(r"https?://\S+", "", text)       # links sound bad
-    text = re.sub(r"[*_#`~>|\[\]{}]", "", text)    # markdown symbols
+    text = re.sub(r"https?://\S+", "", text)
+    text = re.sub(r"[*_#`~>|{}\[\]]", "", text)
     return re.sub(r"\s+", " ", text).strip()
 
 
