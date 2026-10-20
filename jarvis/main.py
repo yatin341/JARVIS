@@ -142,10 +142,9 @@ def speak_old(text):
 
 
 def speak(text):
-        start = time.time()
-        print("Jarvis:", text)
-#FGY2WhTYpPnrIDTdsKH5
+    print("Jarvis:", text)
 
+    try:
         audio = eleven_client.text_to_speech.convert(
             voice_id="JBFqnCBsd6RMkjVDRZzb",
             model_id="eleven_flash_v2_5",
@@ -157,11 +156,11 @@ def speak(text):
                 use_speaker_boost=True
             )
         )
-        print("ElevenLabs took:", round(time.time() - start, 2), "seconds")
         play(audio)
-        print("Total speak time:", round(time.time() - start, 2), "seconds")
 
-
+    except Exception as e:
+        print("ElevenLabs failed:", e)
+        speak_old(text)
 
 
 def speak_Old1(text):
