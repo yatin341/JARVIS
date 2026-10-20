@@ -15,14 +15,14 @@ from fastapi.staticfiles import StaticFiles
 from elevenlabs import VoiceSettings
 from elevenlabs.play import play
 
-#python -m uvicorn interface:app --reload --host 127.0.0.1 --port 8000
+
 
 try:
     import winsound          # built into Windows, plays audio and waits until it has really finished
 except ImportError:
     winsound = None
 
-import main as jarvis  # your Jarvis code (its own loop only runs when you start main.py directly)
+import main as jarvis 
 
 FRONTEND = Path(__file__).parent / "frontend"
 
