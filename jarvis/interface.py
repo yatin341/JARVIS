@@ -1,12 +1,12 @@
 
 import io
-import os
 import re
 import threading
 import time
 import wave
 from contextlib import asynccontextmanager
 from pathlib import Path
+import os
 
 import speech_recognition as sr
 from fastapi import FastAPI
@@ -16,361 +16,165 @@ from elevenlabs import VoiceSettings
 from elevenlabs.play import play
 
 try:
-    import winsound
+    import winsound          # built into Windows, plays audio and waits until it has really finished
 except ImportError:
     winsound = None
 
-import main as jarvis
+import main as jarvis 
+FRONTEND = Path(__file__).parent / "frontend"
 
-
-# --------------------------------------------------
-# SETTINGS
-# --------------------------------------------------
-
-BASE_DIR = Path(__file__).resolve().parent
-FRONTEND = BASE_DIR / "frontend"
-
+# ---- settings you can change ----
 VOICE_ID = "FGY2WhTYpPnrIDTdsKH5"
-VOICE_MODEL = "eleven_flash_v2_5"
-
-VOICE_SETTINGS = {
-    "stability": 0.60,
-    "similarity_boost": 0.80,
-    "style": 0.15,
-    "use_speaker_boost": True,
-}
-
-FOLLOW_UP_SECONDS = 4
+VOICE_MODEL = "eleven_flash_v2_5"   
+VOICE_SETTINGS = dict(stability=0.60, similarity_boost=0.80, style=0.15, use_speaker_boost=True)
+FOLLOW_UP_SECONDS = 4                   # how long Jarvis keeps listening after an answer (0 = always need "Jarvis")
+END_WORDS = ("thank you", "thanks", "that's all", "stop listening", "go to sleep", "goodbye", "bye")
 PCM_RATE = 24000
 
-END_WORDS = (
-    "thank you",
-    "thanks",
-    "that's all",
-    "stop listening",
-    "go to sleep",
-    "goodbye",
-    "bye",
-)
-
-SLEEP_WORDS = (
-    "go to sleep",
-    "sleep mode",
-    "enter sleep mode",
-    "bas karo",
-    "stop listening",
-    "relax",
-)
-
-status = {
-    "state": "idle",
-    "heard": "",
-    "text": "",
-}
-
-status_lock = threading.Lock()
-listener_started = False
-listener_lock = threading.Lock()
-
-
-# --------------------------------------------------
-# FRONTEND STATUS
-# --------------------------------------------------
-
-def set_status(**kwargs):
-    with status_lock:
-        status.update(kwargs)
-
-
-def get_status():
-    with status_lock:
-        return status.copy()
-
-
-# --------------------------------------------------
-# ELEVENLABS VOICE
-# --------------------------------------------------
-
 def clean_for_speech(text):
-    text = str(text)
     text = re.sub(r"https?://\S+", "", text)
     text = re.sub(r"[*_#`~>|{}\[\]]", "", text)
     return re.sub(r"\s+", " ", text).strip()
 
-
-def eleven_audio(text, output_format):
+def eleven_audio(text, fmt):
     return jarvis.eleven_client.text_to_speech.convert(
-        voice_id=VOICE_ID,
-        model_id=VOICE_MODEL,
-        text=text,
-        voice_settings=VoiceSettings(**VOICE_SETTINGS),
-        output_format=output_format,
-    )
+        voice_id=VOICE_ID, model_id=VOICE_MODEL, text=text,
+        voice_settings=VoiceSettings(**VOICE_SETTINGS), output_format=fmt)
 
 
 def clear_speak(text):
+    """Speaks the whole sentence and only returns after the audio has really finished."""
     text = clean_for_speech(text) or "Done, boss."
     print("Jarvis:", text)
 
     if winsound:
         try:
-            pcm = b"".join(
-                eleven_audio(text, f"pcm_{PCM_RATE}")
-            )
-
-            padding = lambda seconds: (
-                b"\x00" * int(PCM_RATE * 2 * seconds)
-            )
-
-            buffer = io.BytesIO()
-
-            with wave.open(buffer, "wb") as audio_file:
-                audio_file.setnchannels(1)
-                audio_file.setsampwidth(2)
-                audio_file.setframerate(PCM_RATE)
-                audio_file.writeframes(
-                    padding(0.2) + pcm + padding(0.5)
-                )
-
-            winsound.PlaySound(
-                buffer.getvalue(),
-                winsound.SND_MEMORY,
-            )
+            pcm = b"".join(eleven_audio(text, f"pcm_{PCM_RATE}"))
+            pad = lambda sec: b"\x00" * int(PCM_RATE * 2 * sec)
+            buf = io.BytesIO()
+            with wave.open(buf, "wb") as w:
+                w.setnchannels(1); w.setsampwidth(2); w.setframerate(PCM_RATE)
+                w.writeframes(pad(0.2) + pcm + pad(0.5))   # silence at both ends: nothing gets clipped
+            winsound.PlaySound(buf.getvalue(), winsound.SND_MEMORY)   # waits until playback is done
             return
+        except Exception as e:
+            print("PCM playback failed, trying normal playback:", e)
 
-        except Exception as error:
-            print("PCM playback failed:", error)
+    play(b"".join(eleven_audio(text, "mp3_44100_128")))
+    time.sleep(0.5)
 
-    # Fallback audio playback
-    audio = b"".join(
-        eleven_audio(text, "mp3_44100_128")
-    )
-    play(audio)
+
+real_speak = clear_speak
+status = {"state": "idle", "heard": "", "text": ""}   # what the web page displays
+
+
+def set_status(**kw):
+    status.update(kw)
 
 
 def tracked_speak(text):
+    """Your speak(), but it tells the web page when Jarvis is talking (so the animation matches the voice)."""
     set_status(state="speaking", text=text)
-
     try:
-        clear_speak(text)
-
-    except Exception as error:
-        print("ElevenLabs failed:", error)
-
         try:
-            # Use the backup voice from main.py
-            jarvis.speak_old(text)
-        except Exception as backup_error:
-            print("Backup voice failed:", backup_error)
-
+            real_speak(text)                 # ElevenLabs
+        except Exception as e:
+            print("ElevenLabs failed, using backup voice:", e)
+            jarvis.speak_old(text)           # pyttsx3 backup from your code
+    except Exception as e:
+        print("Voice error:", e)
+        time.sleep(min(6, 0.8 + len(text) * 0.05))
     finally:
         set_status(state="idle", text="")
 
 
-# --------------------------------------------------
-# COMMAND HANDLING
-# --------------------------------------------------
-
 def handle_command(command):
-    command = command.strip()
-
-    if not command:
-        return
-
     print("Command heard:", command)
     set_status(state="thinking", heard=command, text="")
-
     try:
         jarvis.processcommand(command)
+    except Exception as e:
+        print("Command error:", e)
+    set_status(state="idle", heard="", text="")
 
-    except Exception as error:
-        print("Command error:", error)
-
-    finally:
-        set_status(state="idle", heard="", text="")
-
-
-# --------------------------------------------------
-# MICROPHONE / WAKE WORD LOOP
-# --------------------------------------------------
 
 def wake_loop():
-    recognizer = sr.Recognizer()
-    recognizer.pause_threshold = 1.8
-    recognizer.non_speaking_duration = 0.5
-
+    r = sr.Recognizer()
+    r.pause_threshold = 1.8
+    r.non_speaking_duration = 0.5
     follow_until = 0
 
     tracked_speak("Jarvis is ready")
-
     while True:
         awake = False
-
+        following = time.time() < follow_until
         try:
-            # Sleep mode still listens for the wake word.
-            if jarvis.sleep_mode:
-                follow_until = 0
+            set_status(state="listening" if following else "idle", heard="", text="")
 
-            following = (
-                not jarvis.sleep_mode
-                and time.time() < follow_until
-            )
-
-            set_status(
-                state="listening" if following else "idle",
-                heard="",
-                text="",
-            )
-
-            with sr.Microphone() as source:
-                if not following:
-                    print("Waiting for wake word: Jarvis")
-
-                audio = recognizer.listen(
-                    source,
-                    timeout=10 if not following else FOLLOW_UP_SECONDS,
-                    phrase_time_limit=30 if following else 8,
-                )
-
-            heard = recognizer.recognize_google(audio).strip()
-            low = heard.lower()
-
-            # --------------------------------------
-            # FOLLOW-UP COMMANDS
-            # --------------------------------------
-
+            # ---- follow-up: no wake word needed for a few seconds after an answer ----
             if following:
-                if any(word in low for word in SLEEP_WORDS):
-                    jarvis.sleep_mode = True
+                with sr.Microphone() as source:
+                    audio = r.listen(source, timeout=FOLLOW_UP_SECONDS, phrase_time_limit=30)
+                command = r.recognize_google(audio)
+                if any(w in command.lower() for w in END_WORDS):
                     follow_until = 0
-                    tracked_speak("Going to sleep, boss.")
+                    tracked_speak("Okay boss.")
                     continue
-
-                if any(word in low for word in END_WORDS):
-                    follow_until = 0
-                    tracked_speak("Okay, boss.")
-                    continue
-
-                handle_command(heard)
-
-                if jarvis.sleep_mode:
-                    follow_until = 0
-                else:
-                    follow_until = time.time() + FOLLOW_UP_SECONDS
-
+                handle_command(command)
+                follow_until = time.time() + FOLLOW_UP_SECONDS
                 continue
 
-            # --------------------------------------
-            # WAKE WORD
-            # --------------------------------------
-
+            # ---- waiting for "Jarvis" ----
+            with sr.Microphone() as source:
+                audio = r.listen(source, timeout=10, phrase_time_limit=5)
+            heard = r.recognize_google(audio)
+            low = heard.lower()
             if "jarvis" not in low:
                 continue
 
             print("Wake word heard:", heard)
             awake = True
 
-            # Wake Jarvis from sleep.
-            jarvis.sleep_mode = False
-
-            # Support: "Jarvis open YouTube"
-            rest = low.split("jarvis", 1)[1].strip(" ,.!")
-
+            rest = low.split("jarvis", 1)[1].strip(" ,.")     # "Jarvis open youtube" in one sentence
             if len(rest) > 2:
                 handle_command(rest)
-
-                if not jarvis.sleep_mode:
-                    follow_until = time.time() + FOLLOW_UP_SECONDS
-                else:
-                    follow_until = 0
-
+                follow_until = time.time() + FOLLOW_UP_SECONDS
                 continue
 
-            tracked_speak("Yes, boss.")
-
-            set_status(
-                state="listening",
-                heard="",
-                text="",
-            )
-
+            tracked_speak("yes boss")
+            set_status(state="listening", heard="", text="")
             with sr.Microphone() as source:
-                recognizer.adjust_for_ambient_noise(
-                    source,
-                    duration=0.3,
-                )
-
-                audio = recognizer.listen(
-                    source,
-                    timeout=10,
-                    phrase_time_limit=30,
-                )
-
-            command = recognizer.recognize_google(audio)
-            handle_command(command)
-
-            if not jarvis.sleep_mode:
-                follow_until = time.time() + FOLLOW_UP_SECONDS
-            else:
-                follow_until = 0
+                r.adjust_for_ambient_noise(source, duration=0.5)
+                audio = r.listen(source, timeout=10, phrase_time_limit=30)
+            handle_command(r.recognize_google(audio))
+            follow_until = time.time() + FOLLOW_UP_SECONDS
 
         except sr.WaitTimeoutError:
-            if time.time() >= follow_until:
-                follow_until = 0
-
+            follow_until = 0                       # nobody spoke
         except sr.UnknownValueError:
             if awake:
-                tracked_speak(
-                    "Sorry, boss. I didn't catch that."
-                )
-
-        except sr.RequestError as error:
-            print("Speech recognition service error:", error)
-            time.sleep(2)
-
-        except Exception as error:
-            print("Listener error:", error)
+                tracked_speak("Sorry boss, I didn't catch that.")
+        except Exception as e:
+            print("error:", e)
             time.sleep(1)
 
 
-# --------------------------------------------------
-# FASTAPI APPLICATION
-# --------------------------------------------------
-
 @asynccontextmanager
 async def lifespan(app):
-    global listener_started
-
-    # Route all main.py speech through the interface.
     jarvis.speak = tracked_speak
 
+    # Start microphone listening only on your own laptop
     enable_wake_word = (
-        os.getenv("ENABLE_LOCAL_WAKE_WORD", "false").lower()
-        == "true"
+        os.getenv("ENABLE_LOCAL_WAKE_WORD", "false").lower() == "true"
     )
 
     if enable_wake_word:
-        with listener_lock:
-            if not listener_started:
-                listener_started = True
-
-                threading.Thread(
-                    target=wake_loop,
-                    daemon=True,
-                    name="jarvis-microphone",
-                ).start()
+        threading.Thread(target=wake_loop, daemon=True).start()
 
     yield
 
-
 app = FastAPI(lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
 @app.get("/api/health")
@@ -379,13 +183,9 @@ def health():
 
 
 @app.get("/api/state")
-def get_state():
-    return get_status()
+def state():
+    return status
 
 
 if FRONTEND.exists():
-    app.mount(
-        "/",
-        StaticFiles(directory=FRONTEND, html=True),
-        name="frontend",
-    )
+    app.mount("/", StaticFiles(directory=FRONTEND, html=True), name="frontend")
