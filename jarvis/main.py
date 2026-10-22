@@ -111,7 +111,7 @@ def voice_typing():
                 continue
 
             elif text.lower() in ["next line",]:
-               pyautogui.hotkey("shift", "enter")
+               pyautogui.hotkey("shift","enter")
                 continue
                 
 
