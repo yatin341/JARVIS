@@ -1,5 +1,4 @@
 import speech_recognition as sr
-import pyttsx3
 import webbrowser
 from youtube import play_on_youtube
 from groq import Groq
@@ -132,22 +131,12 @@ def voice_typing():
 
    
 
-#if your elevenlab is not working use this speak function
-def speak_old(text):
-    engine = pyttsx3.init('sapi5')
-    voices = engine.getProperty('voices')
-    engine.setProperty('voice', voices[1].id)  
-    engine.say(text)
-    engine.runAndWait()
-
-
 def speak(text):
         start = time.time()
         print("Jarvis:", text)
-#FGY2WhTYpPnrIDTdsKH5
-#male - JBFqnCBsd6RMkjVDRZzb
+
         audio = eleven_client.text_to_speech.convert(
-            voice_id="FGY2WhTYpPnrIDTdsKH5",
+            voice_id="JBFqnCBsd6RMkjVDRZzb",
             model_id="eleven_flash_v2_5",
             text=text,
             voice_settings=VoiceSettings(
@@ -162,21 +151,6 @@ def speak(text):
         print("Total speak time:", round(time.time() - start, 2), "seconds")
 
 
-
-
-def speak_Old1(text):
-
-       start = time.time()
-
-       print("TTS starting...")
-       audio = eleven_client.text_to_speech.convert(
-        text=text,
-        voice_id="FGY2WhTYpPnrIDTdsKH5",
-        model_id="eleven_flash_v2_5"
-     )
-       print("ElevenLabs took:", round(time.time() - start, 2), "seconds")
-       play(audio)
-       print("Total speak time:", round(time.time() - start, 2), "seconds")
 
 conversation_history= [
     {
