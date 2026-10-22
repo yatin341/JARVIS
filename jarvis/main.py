@@ -111,7 +111,7 @@ def voice_typing():
                 continue
 
             elif text.lower() in ["next line",]:
-               pyautogui.hotkey("shift","enter")
+                pyautogui.hotkey("shift","enter")
                 continue
                 
 
@@ -142,11 +142,12 @@ def speak_old(text):
 
 
 def speak(text):
-    print("Jarvis:", text)
-
-    try:
+        start = time.time()
+        print("Jarvis:", text)
+#FGY2WhTYpPnrIDTdsKH5
+#male - JBFqnCBsd6RMkjVDRZzb
         audio = eleven_client.text_to_speech.convert(
-            voice_id="JBFqnCBsd6RMkjVDRZzb",
+            voice_id="FGY2WhTYpPnrIDTdsKH5",
             model_id="eleven_flash_v2_5",
             text=text,
             voice_settings=VoiceSettings(
@@ -156,11 +157,11 @@ def speak(text):
                 use_speaker_boost=True
             )
         )
+        print("ElevenLabs took:", round(time.time() - start, 2), "seconds")
         play(audio)
+        print("Total speak time:", round(time.time() - start, 2), "seconds")
 
-    except Exception as e:
-        print("ElevenLabs failed:", e)
-        speak_old(text)
+
 
 
 def speak_Old1(text):
@@ -433,45 +434,66 @@ if __name__ =="__main__":
     # speak('''welcome yatin sir, i was waiting for you , when you was offline 199 messages were received i replyed all
     # and 10 phone calls were received i answered all 3 phone calls were advertisements and 7 were important phone calls
     #  i already send you the list of that 7 phone calls so yesterday you was working on new project so you want to continue''')
-    speak(" Jarvis is ready ")                   
+    speak(" Jarvis is ready ")  
+    r = sr.Recognizer()
+    r.pause_threshold = 1.8
+    r.non_speaking_duration = 0.5
+                 
     while True:
-         if sleep_mode:
-             print("Jarvis is sleeping. Say 'Jarvis' to wake me.")
-        r = sr.Recognizer()
-
-        r.pause_threshold = 1.8
-        r.non_speaking_duration = 0.5
-  
-
-        print("recognizing...")
         try:
             with sr.Microphone() as source:
-                print("listening...")
-                audio = r.listen(source,timeout=10,phrase_time_limit=5)
-            
-            word = r.recognize_google(audio)
-            # if (word.lower() == "jarvis"):
-            if "jarvis" in word.lower():
-                sleep_mode = False
-                speak("yes  boss")
-                
-                
-                 #listen fo your the next command
-                with sr.Microphone() as source:
+                if sleep_mode:
+                    print("Jarvis is sleeping. Say 'Jarvis' to wake me.")
+                else:
+                    print("Listening for wake word...")
 
-                    print("jarvis is active")
+                audio = r.listen(
+                    source,
+                    timeout=10,
+                    phrase_time_limit=5
+                )
 
-            
-                    r.adjust_for_ambient_noise(
-                        source,
-                        duration=0.5
-                    )
-                    audio = r.listen(source,timeout=None,phrase_time_limit=60)
-                command = r.recognize_google(audio)
-                print("Command heard:", command)
+            word = r.recognize_google(audio).lower().strip()
+            print("Heard:", word)
 
-                processcommand(command)
-                
+            # Ignore everything unless the wake word is detected
+            if "jarvis" not in word:
+                continue
+
+            sleep_mode = False
+            speak("Yes, boss.")
+
+            with sr.Microphone() as source:
+                print("Jarvis is active. Listening for command...")
+
+                r.adjust_for_ambient_noise(source, duration=0.3)
+                audio = r.listen(
+                    source,
+                    timeout=10,
+                    phrase_time_limit=60
+                )
+
+            command = r.recognize_google(audio).strip()
+            print("Command heard:", command)
+
+            processcommand(command)
+
+        except sr.WaitTimeoutError:
+            continue
+
+        except sr.UnknownValueError:
+            print("Sorry, I couldn't understand that.")
+
+        except sr.RequestError as e:
+            print("Speech recognition service error:", e)
+            time.sleep(2)
+
+        except KeyboardInterrupt:
+            print("Jarvis shutting down.")
+            break
+
         except Exception as e:
-               print("error; {0}".format(e))   
+            print("Error:", e)
+            time.sleep(1)
+
            
