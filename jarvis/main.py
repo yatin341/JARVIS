@@ -141,27 +141,6 @@ def speak_old(text):
     engine.runAndWait()
 
 
-def speak(text):
-        start = time.time()
-        print("Jarvis:", text)
-#FGY2WhTYpPnrIDTdsKH5
-#male - JBFqnCBsd6RMkjVDRZzb
-        audio = eleven_client.text_to_speech.convert(
-            voice_id="FGY2WhTYpPnrIDTdsKH5",
-            model_id="eleven_flash_v2_5",
-            text=text,
-            voice_settings=VoiceSettings(
-                stability=0.60,
-                similarity_boost=0.80,
-                style=0.15,
-                use_speaker_boost=True
-            )
-        )
-        print("ElevenLabs took:", round(time.time() - start, 2), "seconds")
-        play(audio)
-        print("Total speak time:", round(time.time() - start, 2), "seconds")
-
-
 
 
 def speak_Old1(text):
@@ -431,9 +410,6 @@ def processcommand(command):
 
 if __name__ =="__main__":
 
-    # speak('''welcome yatin sir, i was waiting for you , when you was offline 199 messages were received i replyed all
-    # and 10 phone calls were received i answered all 3 phone calls were advertisements and 7 were important phone calls
-    #  i already send you the list of that 7 phone calls so yesterday you was working on new project so you want to continue''')
     speak(" Jarvis is ready ")  
     r = sr.Recognizer()
     r.pause_threshold = 1.8
