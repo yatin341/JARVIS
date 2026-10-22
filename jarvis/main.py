@@ -144,18 +144,23 @@ def speak_old(text):
 
 
 def speak(text):
+  
+      start = time.time()
+   try:
+       
+        print("TTS starting...")
+        audio = eleven_client.text_to_speech.convert(
+         text=text,
+         voice_id="FGY2WhTYpPnrIDTdsKH5",
+         model_id="eleven_flash_v2_5"
+      )
+        print("ElevenLabs took:", round(time.time() - start, 2), "seconds")
+        play(audio)
+        print("Total speak time:", round(time.time() - start, 2), "seconds")
+    except Exception as e:
+        print("ElevenLabs failed:", e)
+        speak_old(text)
 
-       start = time.time()
-
-       print("TTS starting...")
-       audio = eleven_client.text_to_speech.convert(
-        text=text,
-        voice_id="FGY2WhTYpPnrIDTdsKH5",
-        model_id="eleven_flash_v2_5"
-     )
-       print("ElevenLabs took:", round(time.time() - start, 2), "seconds")
-       play(audio)
-       print("Total speak time:", round(time.time() - start, 2), "seconds")
 
 conversation_history= [
     {
