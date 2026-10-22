@@ -143,7 +143,7 @@ def speak_old(text):
 
 
 
-def speak_Old1(text):
+def speak(text):
 
        start = time.time()
 
