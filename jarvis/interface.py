@@ -26,7 +26,7 @@ import main as jarvis
 FRONTEND = Path(__file__).parent / "frontend"
 
 # ---- settings you can change ----
-VOICE_ID = "JBFqnCBsd6RMkjVDRZzb"
+VOICE_ID = "FGY2WhTYpPnrIDTdsKH5"
 VOICE_MODEL = "eleven_flash_v2_5"   
 VOICE_SETTINGS = dict(stability=0.60, similarity_boost=0.80, style=0.15, use_speaker_boost=True)
 FOLLOW_UP_SECONDS = 4                   # how long Jarvis keeps listening after an answer (0 = always need "Jarvis")
