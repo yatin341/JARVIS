@@ -96,9 +96,8 @@ def voice_typing():
                 break
 
             # Send message when you say ENTER
-            elif text.lower() == "enter":
+            elif text.lower() in ["enter", "send"]:
                 pyautogui.press("enter")
-                print("Pressed Enter")
                 continue
 
             elif text.lower() in ["delete","backspace"]:
@@ -405,9 +404,6 @@ def processcommand(command):
 
 if __name__ =="__main__":
 
-    # speak('''welcome yatin sir, i was waiting for you , when you was offline 199 messages were received i replyed all
-    # and 10 phone calls were received i answered all 3 phone calls were advertisements and 7 were important phone calls
-    #  i already send you the list of that 7 phone calls so yesterday you was working on new project so you want to continue''')
     speak(" Jarvis is ready ")                   
     while True:
         r = sr.Recognizer()
