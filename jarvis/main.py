@@ -341,10 +341,6 @@ def processcommand(command):
           return
 
 
-      elif"open porn" in command:
-        
-          webbrowser.open("https://www.pornhub.org/")
-
       elif "open my repository" in command or "show my repository" in command:
           speak("okay")
           webbrowser.open("https://github.com/yatin341?tab=repositories")
@@ -411,7 +407,6 @@ def processcommand(command):
          voice_typing()  
         
       else: 
-        #let groq handle the request
          output = aiprocess(command)
          speak(output)
 
@@ -421,9 +416,7 @@ def processcommand(command):
 
 if __name__ =="__main__":
 
-    # speak('''welcome yatin sir, i was waiting for you , when you was offline 199 messages were received i replyed all
-    # and 10 phone calls were received i answered all 3 phone calls were advertisements and 7 were important phone calls
-    #  i already send you the list of that 7 phone calls so yesterday you was working on new project so you want to continue''')
+
     speak(" Jarvis is ready ")                   
     while True:
         r = sr.Recognizer()
@@ -439,7 +432,7 @@ if __name__ =="__main__":
                 audio = r.listen(source,timeout=10,phrase_time_limit=5)
             
             word = r.recognize_google(audio)
-            # if (word.lower() == "jarvis"):
+
             if "jarvis" in word.lower():
                 sleep_mode = False
                 speak("yes  boss")
