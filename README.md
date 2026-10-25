@@ -128,7 +128,7 @@ For example:
 
 User: Open Google
 
-JARVIS: Opening Google boss
+JARVIS: Opening Google 
 
 ▶️ YouTube Search & Playback
 
@@ -434,29 +434,15 @@ Then give your command.
 
 Open Google
 
-Open Google
-
 Open YouTube
-
-Open YouTube
-
-Open LinkedIn
 
 Open LinkedIn
 
 Open ChatGPT
 
-Open ChatGPT
-
-Open Gemini
-
 Open Gemini
 
 Open WhatsApp
-
-Open WhatsApp
-
-Open GitHub
 
 Open GitHub
 
