@@ -1,4 +1,5 @@
 import speech_recognition as sr
+import pyttsx3
 import webbrowser
 from youtube import play_on_youtube
 from groq import Groq
@@ -77,7 +78,7 @@ def is_sleep_command(command):
 def voice_typing():
     r = sr.Recognizer()
 
-    speak("Voice typing activated. Tell me what to type.")
+    speak("Voice typing activated.")
 
     while True:
         try:
@@ -96,8 +97,9 @@ def voice_typing():
                 break
 
             # Send message when you say ENTER
-            elif text.lower() in ["enter", "send"]:
+            elif text.lower() in ["enter", "send" , "send it"]:
                 pyautogui.press("enter")
+                print("Pressed Enter")
                 continue
 
             elif text.lower() in ["delete","backspace"]:
@@ -130,6 +132,15 @@ def voice_typing():
 
    
 
+#if your elevenlab is not working use this speak function
+def speak_old(text):
+    engine = pyttsx3.init('sapi5')
+    voices = engine.getProperty('voices')
+    engine.setProperty('voice', voices[1].id)  
+    engine.say(text)
+    engine.runAndWait()
+
+
 def speak(text):
         start = time.time()
         print("Jarvis:", text)
@@ -150,7 +161,6 @@ def speak(text):
         print("Total speak time:", round(time.time() - start, 2), "seconds")
 
 
-
 conversation_history= [
     {
         "role": "system",
@@ -161,13 +171,15 @@ If the user asks something related to a previous question,
 use the previous conversation context.
 If the user changes the topic, answer the new topic normally.
 Do not use markdown.Do not give unnecessary explanations. and always explain like every normal humans can understand 
- if some one ask about you tell then that your name is jarvis ai voice assistant and you are here to help them
  if user talk with you talk with the user and
 talk friendly if user ask for any advice give your best advise to user  
 always remember what user ask to you Remember the conversation and use previous messages to understand follow-up questions.
 If the user asks something related to a previous question, use the previous context.
 If the user changes the topic, answer the new topic normally. 
 if some one ask who made you tell them yatin made me .
+if some one ask about yatin say he is the creator who created me 
+allaways repely the user in which user speak same language don,t
+change the language randomly 
 
 If the user's question depends on current or recent information,
 use web search when available instead of relying on your stored knowledge.
@@ -325,60 +337,65 @@ def processcommand(command):
 
       if is_sleep_command(command):
           sleep_mode = True
-          speak("okay boss")
+          speak("okay ")
           return
 
+
+      elif"open porn" in command:
+        
+          webbrowser.open("https://www.pornhub.org/")
+
       elif "open my repository" in command or "show my repository" in command:
-          speak("okk")
+          speak("okay")
           webbrowser.open("https://github.com/yatin341?tab=repositories")
 
       elif "open google" in command:
-        speak("   Opening Google boss")
+        speak("Opening Google")
         webbrowser.open("https://google.com")
 
       elif "open youtube" in command:
-        speak("   Opening YouTube boss")
+        speak("Opening YouTube")
         webbrowser.open("https://youtube.com")
 
       elif "open linkedin" in command:
-            speak("Opening linkedin boss")
+            speak("Opening linkedin")
             webbrowser.open("https://linkedin.com")
 
       elif "open chat gpt" in command:
-          speak("opening chat gpt boss")
+          speak("opening chat gpt ")
           webbrowser.open("https://chatgpt.com")
 
       elif "open gemini" in command:
-          speak("opening gemini boss") 
+          speak("opening gemini ") 
           webbrowser.open("https://gemini.google.com/app") 
 
       elif "open brave" in command:
-          speak("opening brave boss")
+          speak("opening brave ")
           webbrowser.open("brave://newtab")
 
       elif"open instagram" in command:
-          speak("opening instagram boss")
+          speak("opening instagram ")
           webbrowser.open("https://instagram.com")
 
       elif"open pintrest" in command:
-          speak("opening boss")
+          speak("opening pintrest")
           webbrowser.open("https://in.pinterest.com/")  
 
       elif"open whatsapp" in command:
-          speak("opening boss")
+          speak("opening whattsapp")
           webbrowser.open("https://web.whatsapp.com/")
 
       elif"open netflix" in command:
-          speak("opening boss")
+          speak("opening netflix")
           webbrowser.open("https://www.netflix.com/browse")
 
       elif"jio hotstar" in command:
-          speak("opening boss")
+          speak("opening jio hotstar")
           webbrowser.open("https://www.hotstar.com/in/explore")
 
 
       elif"open github" in command:
-          speak("opening boss")
+          speak("opening github")
           webbrowser.open("https://github.com/yatin341")   
 
       elif "play" in command and "youtube" in command:
@@ -404,6 +421,9 @@ def processcommand(command):
 
 if __name__ =="__main__":
 
+    # speak('''welcome yatin sir, i was waiting for you , when you was offline 199 messages were received i replyed all
+    # and 10 phone calls were received i answered all 3 phone calls were advertisements and 7 were important phone calls
+    #  i already send you the list of that 7 phone calls so yesterday you was working on new project so you want to continue''')
     speak(" Jarvis is ready ")                   
     while True:
         r = sr.Recognizer()
