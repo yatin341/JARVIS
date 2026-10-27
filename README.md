@@ -37,9 +37,7 @@ JARVIS listens to the user's voice through the microphone and converts speech in
 The project uses the SpeechRecognition Python library with Google's speech recognition service.
 
 Example:
-
 User: Jarvis
-
 JARVIS: Yes boss
 
 After activation, JARVIS listens for the next command.
