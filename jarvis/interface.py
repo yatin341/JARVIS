@@ -26,7 +26,7 @@ import main as jarvis
 
 FRONTEND = Path(__file__).parent / "frontend"
 
-# ---- settings you can change ----
+
 VOICE_ID = "FGY2WhTYpPnrIDTdsKH5"
 VOICE_MODEL = "eleven_flash_v2_5"   
 VOICE_SETTINGS = dict(stability=0.60, similarity_boost=0.80, style=0.15, use_speaker_boost=True)
@@ -114,7 +114,7 @@ def wake_loop():
         try:
             set_status(state="listening" if following else "idle", heard="", text="")
 
-            # ---- follow-up: no wake word needed for a few seconds after an answer ----
+           
             if following:
                 with sr.Microphone() as source:
                     audio = r.listen(source, timeout=FOLLOW_UP_SECONDS, phrase_time_limit=30)
@@ -127,7 +127,7 @@ def wake_loop():
                 follow_until = time.time() + FOLLOW_UP_SECONDS
                 continue
 
-            # ---- waiting for "Jarvis" ----
+          
             with sr.Microphone() as source:
                 audio = r.listen(source, timeout=10, phrase_time_limit=5)
             heard = r.recognize_google(audio)
