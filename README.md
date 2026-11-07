@@ -578,7 +578,6 @@ This allows users to interact with JARVIS using natural voice commands.
 Before running the complete assistant, make sure:
 
 Your microphone works
-
 Speech recognition is available
 
 Your API keys are configured
