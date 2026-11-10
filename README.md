@@ -48,7 +48,7 @@ JARVIS speaks its responses instead of only displaying them in the terminal.
 
 The current project uses:
 
-ElevenLabs
+🔊ElevenLabs
 
 for natural voice output.
 
@@ -915,5 +915,4 @@ Give it a star ⭐
 Follow the repository for future updates.
 
 More JARVIS features are planned! 🚀
-
 Built with Python 🐍 + AI 🧠 + Voice 🎙️ + Automation 💻 + APIs 🔌00   
